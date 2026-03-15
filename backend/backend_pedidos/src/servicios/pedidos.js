@@ -15,17 +15,25 @@ export async function creaPedido({
   abono,
   comentario,
 }) {
+  // Validación mínima
+  if (!nombre || !telefono || !direccion || !fecha_envio) {
+    throw new Error(
+      "Faltan campos obligatorios: nombre, telefono, direccion o fecha_envio"
+    );
+  }
+
   const pedido = new Pedido({
     nombre,
     telefono,
     direccion,
-    fecha_solicitud,
+    fecha_solicitud: fecha_solicitud || new Date(), // se genera automáticamente si no se envía
     fecha_envio,
     total,
-    pagado,
-    abono,
-    comentario,
+    pagado: pagado || [],
+    abono: abono || 0,
+    comentario: comentario || "",
   });
+
   return await pedido.save();
 }
 

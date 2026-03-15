@@ -2,7 +2,6 @@ import 'dotenv/config'
 
 import express from 'express'
 import cors from 'cors'
-import bodyParser from 'body-parser'
 import mongoose from 'mongoose'  
 
 import { pedidosRoutes } from './rutas/pedidos.js'  
@@ -11,9 +10,10 @@ import { usuarioRoutes } from './rutas/usuarios.js'
 // Crear la aplicación Express
 const app = express()
 
-// Configurar middlewares
+// Middlewares
 app.use(cors())
-app.use(bodyParser.json())
+app.use(express.json())         // Reemplaza body-parser
+app.use(express.urlencoded({ extended: true })) // Para formularios urlencoded
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pedidos'
 
@@ -27,7 +27,7 @@ mongoose.connect(MONGODB_URI)
     process.exit(1) 
   })
 
-// Configurar rutas
+// Rutas
 pedidosRoutes(app)
 usuarioRoutes(app)
 
@@ -38,7 +38,6 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3001
 
-// Iniciar servidor SOLO si no estamos en modo test
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`)

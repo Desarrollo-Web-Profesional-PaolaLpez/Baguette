@@ -58,12 +58,31 @@ export function pedidosRoutes(app) {
   // POST crear pedido
   router.post('/', async (req, res) => {
     try {
-      const nuevoPedido = await creaPedido(req.body)
+      const { cliente, nombre, telefono, direccion, fecha_solicitud, fecha_envio, total, pagado, abono, comentario } = req.body
+
+      // ⚠ Validar campos obligatorios
+      if (!nombre || !telefono || !direccion || !fecha_envio) {
+        return res.status(400).json({ error: 'Faltan campos obligatorios: nombre, telefono, direccion o fecha_envio' })
+      }
+
+      const nuevoPedido = await creaPedido({
+        cliente,
+        nombre,
+        telefono,
+        direccion,
+        fecha_solicitud,
+        fecha_envio,
+        total,
+        pagado,
+        abono,
+        comentario
+      })
+
       res.status(201).json(nuevoPedido)
 
     } catch (err) {
       console.error(err)
-      res.status(500).json({ error: 'Error al crear pedido' })
+      res.status(500).json({ error: 'Error al crear pedido', detalle: err.message })
     }
   })
 
