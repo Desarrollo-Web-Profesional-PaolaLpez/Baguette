@@ -15,7 +15,7 @@ app.use(cors())
 app.use(express.json())         // Reemplaza body-parser
 app.use(express.urlencoded({ extended: true })) // Para formularios urlencoded
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pedidos'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://isapaola188_db_user:TG3vgeOb8KdHA9T3@cluster0.fm6myjp.mongodb.net/?appName=Cluster0'
 
 mongoose.connect(MONGODB_URI)
   .then(() => {

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 //Define una función para inicializar la conexión a la base de datos
 export function initBaseDeDatos() {
-  const DATABASE_URL = process.env.DATABASE_URL || 'mongodb://localhost:27017/pedidos';
+  const DATABASE_URL = process.env.DATABASE_URL || 'mongodb+srv://isapaola188_db_user:TG3vgeOb8KdHA9T3@cluster0.fm6myjp.mongodb.net/?appName=Cluster0';
 
 
   // Configura los eventos de conexión de Mongoose
