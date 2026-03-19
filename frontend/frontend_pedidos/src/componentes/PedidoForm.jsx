@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "axios"; // 👈 IMPORTANTE: Agregar esta importación
 import API from "../servicios/api";
 import { 
   FaBox, FaUser, FaPhone, FaMapMarkerAlt, FaCalendarAlt, 
@@ -28,8 +28,7 @@ function PedidoForm() {
   const [filterStatus, setFilterStatus] = useState("todos");
   const [showForm, setShowForm] = useState(false);
 
-  const API_URL = 'https://baguette-production-6565.up.railway.app/api/v1';
-
+  // Cargar pedidos al montar el componente
   useEffect(() => {
     cargarPedidos();
   }, []);
@@ -37,12 +36,35 @@ function PedidoForm() {
   const cargarPedidos = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/pedidos`);
-      const data = Array.isArray(res.data) ? res.data : [];
+      
+      // 🔍 DIAGNÓSTICO: Ver qué hay en baseURL
+      console.log('🔍 VALOR REAL DE BASEURL:', API.defaults.baseURL);
+      
+      // 🔴 SOLUCIÓN DEFINITIVA: Usar URL completa directamente
+      const res = await axios.get('https://baguette-production-6565.up.railway.app/api/v1/pedidos');
+      
+      console.log('✅ Respuesta exitosa:', res.status);
+      console.log('📦 Pedidos recibidos:', res.data);
+
+      // Asegurarse de que siempre sea un array
+      const data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
       setPedidos(data);
+      console.log('📊 Pedidos cargados:', data.length);
+
     } catch (error) {
-      console.error("Error al cargar pedidos:", error);
-      alert("❌ Error al cargar los pedidos");
+      console.error("❌ Error al cargar pedidos:");
+      console.error("   Mensaje:", error.message);
+      console.error("   Status:", error.response?.status);
+      console.error("   Data:", error.response?.data);
+      
+      // Mensaje de error más descriptivo
+      if (error.response?.status === 500) {
+        alert("❌ Error en el servidor (500). El backend no puede procesar la solicitud.");
+      } else if (error.response?.status === 404) {
+        alert("❌ Ruta no encontrada (404). Verifica la URL de la API.");
+      } else {
+        alert("❌ Error al cargar los pedidos: " + (error.message || "Error desconocido"));
+      }
     } finally {
       setLoading(false);
     }
@@ -65,34 +87,26 @@ function PedidoForm() {
     e.preventDefault();
     try {
       setLoading(true);
-      
       const payload = {
-        nombre: form.nombre,
-        telefono: form.telefono,
-        direccion: form.direccion,
-        fecha_solicitud: form.fecha_solicitud 
-          ? new Date(form.fecha_solicitud).toISOString() 
+        ...form,
+        fecha_solicitud: form.fecha_solicitud
+          ? new Date(form.fecha_solicitud).toISOString()
           : new Date().toISOString(),
         fecha_envio: new Date(form.fecha_envio).toISOString(),
-        total: parseFloat(form.total) || 0,
-        abono: parseFloat(form.abono) || 0,
-        pagado: form.pagado,
-        comentario: form.comentario || ""
+        total: form.total ? parseFloat(form.total) : 0,
+        abono: form.abono ? parseFloat(form.abono) : 0
       };
 
       console.log('📤 Enviando payload:', payload);
 
+      // 🔴 También usamos URL directa para crear/actualizar
       if (editingId) {
-        // ✅ ACTUALIZAR - CORREGIDO
-        console.log('✏️ Actualizando pedido ID:', editingId);
-        const response = await axios.put(`${API_URL}/pedidos/${editingId}`, payload);
-        console.log('✅ Respuesta actualización:', response.data);
+        console.log('✏️ Actualizando pedido:', editingId);
+        await axios.put(`https://baguette-production-6565.up.railway.app/api/v1/pedidos/${editingId}`, payload);
         alert("✅ Pedido actualizado correctamente");
       } else {
-        // ✅ CREAR NUEVO
         console.log('➕ Creando nuevo pedido');
-        const response = await axios.post(`${API_URL}/pedidos`, payload);
-        console.log('✅ Respuesta creación:', response.data);
+        await axios.post('https://baguette-production-6565.up.railway.app/api/v1/pedidos', payload);
         alert("✅ Pedido guardado correctamente");
       }
 
@@ -101,30 +115,23 @@ function PedidoForm() {
       setShowForm(false);
 
     } catch (error) {
-      console.error("❌ Error detallado:");
+      console.error("❌ Error al guardar:");
       console.error("   Mensaje:", error.message);
-      console.error("   Respuesta del servidor:", error.response?.data);
-      console.error("   Status:", error.response?.status);
-      
-      const mensajeError = error.response?.data?.error || error.message;
-      alert(`❌ Error al guardar: ${mensajeError}`);
+      console.error("   Respuesta:", error.response?.data);
+      alert("❌ Error al guardar el pedido: " + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (pedido) => {
-    console.log('✏️ Editando pedido:', pedido);
     setForm({
-      nombre: pedido.nombre || "",
-      telefono: pedido.telefono || "",
-      direccion: pedido.direccion || "",
+      ...pedido,
       fecha_solicitud: pedido.fecha_solicitud ? pedido.fecha_solicitud.split('T')[0] : "",
       fecha_envio: pedido.fecha_envio ? pedido.fecha_envio.split('T')[0] : "",
       total: pedido.total?.toString() || "0",
       abono: pedido.abono?.toString() || "0",
-      pagado: Array.isArray(pedido.pagado) ? pedido.pagado : [],
-      comentario: pedido.comentario || ""
+      pagado: Array.isArray(pedido.pagado) ? pedido.pagado : []
     });
     setEditingId(pedido._id);
     setShowForm(true);
@@ -133,8 +140,9 @@ function PedidoForm() {
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás seguro de eliminar este pedido?")) {
       try {
-        console.log('🗑️ Eliminando pedido ID:', id);
-        await axios.delete(`${API_URL}/pedidos/${id}`);
+        console.log('🗑️ Eliminando pedido:', id);
+        // 🔴 URL directa para eliminar
+        await axios.delete(`https://baguette-production-6565.up.railway.app/api/v1/pedidos/${id}`);
         alert("✅ Pedido eliminado correctamente");
         cargarPedidos();
       } catch (error) {
@@ -159,16 +167,17 @@ function PedidoForm() {
     setEditingId(null);
   };
 
-  // Filtrar pedidos
+  // Filtrar pedidos con seguridad
   const pedidosFiltrados = Array.isArray(pedidos)
     ? pedidos.filter(pedido => {
-        const matchesSearch = 
-          (pedido.nombre?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-          (pedido.telefono || '').includes(searchTerm);
+        const matchesSearch =
+          pedido.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pedido.telefono?.includes(searchTerm);
 
         if (filterStatus === "todos") return matchesSearch;
-        if (filterStatus === "pagado") return pedido.pagado?.length > 0 && matchesSearch;
-        if (filterStatus === "pendiente") return pedido.pagado?.length === 0 && matchesSearch;
+        if (filterStatus === "pagado") return Array.isArray(pedido.pagado) && pedido.pagado.length > 0;
+        if (filterStatus === "pendiente") return Array.isArray(pedido.pagado) && pedido.pagado.length === 0;
+
         return matchesSearch;
       })
     : [];
@@ -176,13 +185,13 @@ function PedidoForm() {
   const calcularSaldo = (total, abono) => (total || 0) - (abono || 0);
 
   const getStatusColor = (pagado, total, abono) => {
-    if (!pagado || pagado.length === 0) return "bg-yellow-100 text-yellow-800";
+    if (!Array.isArray(pagado) || pagado.length === 0) return "bg-yellow-100 text-yellow-800";
     if (calcularSaldo(total, abono) <= 0) return "bg-green-100 text-green-800";
     return "bg-blue-100 text-blue-800";
   };
 
   const getStatusText = (pagado, total, abono) => {
-    if (!pagado || pagado.length === 0) return "Pendiente";
+    if (!Array.isArray(pagado) || pagado.length === 0) return "Pendiente";
     if (calcularSaldo(total, abono) <= 0) return "Pagado";
     return "Abonado";
   };
