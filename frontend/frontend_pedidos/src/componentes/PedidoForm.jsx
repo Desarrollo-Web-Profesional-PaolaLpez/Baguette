@@ -35,7 +35,8 @@ function PedidoForm() {
   const cargarPedidos = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/");
+      // ✅ CORREGIDO: Ahora usa /pedidos
+      const res = await API.get("/pedidos");
 
       // Asegurarse de que siempre sea un array
       const data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
@@ -77,10 +78,12 @@ function PedidoForm() {
       };
 
       if (editingId) {
-        await API.put(`/${editingId}`, payload);
+        // ✅ CORREGIDO: Ahora usa /pedidos/:id
+        await API.put(`/pedidos/${editingId}`, payload);
         alert("✅ Pedido actualizado correctamente");
       } else {
-        await API.post("/", payload);
+        // ✅ CORREGIDO: Ahora usa /pedidos
+        await API.post("/pedidos", payload);
         alert("✅ Pedido guardado correctamente");
       }
 
@@ -112,7 +115,8 @@ function PedidoForm() {
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás seguro de eliminar este pedido?")) {
       try {
-        await API.delete(`/${id}`);
+        // ✅ CORREGIDO: Ahora usa /pedidos/:id
+        await API.delete(`/pedidos/${id}`);
         alert("✅ Pedido eliminado correctamente");
         cargarPedidos();
       } catch (error) {
