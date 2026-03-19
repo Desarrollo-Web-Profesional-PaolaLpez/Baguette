@@ -98,11 +98,11 @@ function PedidoForm() {
       console.log('📤 Enviando payload:', payload);
 
       if (editingId) {
-        // ✅ ACTUALIZAR
+        // ✅ ACTUALIZAR CON PATCH (CORREGIDO)
         const url = `${API_URL}/pedidos/${editingId}`;
-        console.log('✏️ URL actualización:', url);
+        console.log('✏️ URL actualización (PATCH):', url);
         
-        const response = await axios.put(url, payload);
+        const response = await axios.patch(url, payload); // 👈 CAMBIADO DE PUT A PATCH
         console.log('✅ Respuesta actualización:', response.data);
         alert("✅ Pedido actualizado correctamente");
       } else {
@@ -123,6 +123,7 @@ function PedidoForm() {
       console.error("❌ Error al guardar:");
       console.error("   Mensaje:", error.message);
       console.error("   URL:", error.config?.url);
+      console.error("   Método:", error.config?.method);
       console.error("   Status:", error.response?.status);
       console.error("   Respuesta:", error.response?.data);
       
