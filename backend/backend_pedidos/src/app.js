@@ -1,5 +1,4 @@
 import 'dotenv/config'  
-
 import express from 'express'
 import cors from 'cors'
 import mongoose from 'mongoose'  
@@ -7,13 +6,12 @@ import mongoose from 'mongoose'
 import { pedidosRoutes } from './rutas/pedidos.js'  
 import { usuarioRoutes } from './rutas/usuarios.js'
 
-// Crear la aplicación Express
 const app = express()
 
 // Middlewares
 app.use(cors())
-app.use(express.json())         // Reemplaza body-parser
-app.use(express.urlencoded({ extended: true })) // Para formularios urlencoded
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pedidos'
 
@@ -27,9 +25,9 @@ mongoose.connect(MONGODB_URI)
     process.exit(1) 
   })
 
-// Rutas
-pedidosRoutes(app)
-usuarioRoutes(app)
+// ✅ FORMA CORRECTA: Registrar las rutas
+pedidosRoutes(app)  // Esto ya configura /api/v1/pedidos internamente
+usuarioRoutes(app)  // Esto configurará /api/v1/usuarios
 
 // Ruta de prueba
 app.get('/', (req, res) => {
