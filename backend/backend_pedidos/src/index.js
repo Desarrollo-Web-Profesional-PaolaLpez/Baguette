@@ -1,19 +1,20 @@
-// src/index.js
 import dotenv from 'dotenv'
 dotenv.config()
+
+import dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
 
 import { app } from './app.js'
 import { initBaseDeDatos } from './bd/init.js'
 
-/**
- * Iniciar el servidor Express después de conectar a la base de datos
- */
 try {
   await initBaseDeDatos()
+  // Railway asigna automáticamente el puerto, usa el de ellos si existe
   const PORT = process.env.PORT || 3001
   app.listen(PORT, () => {
-    console.info(`Servidor Express ejecutandose sobre http://localhost:${PORT}`)
+    console.info(`🚀 Servidor ejecutandose en puerto: ${PORT}`)
   })
 } catch (err) {
-  console.error('Error conectando a la Base de Datos:', err)
+  console.error('❌ Error conectando a la Base de Datos:', err)
+  process.exit(1)
 }
