@@ -1,25 +1,22 @@
 import axios from "axios";
 
-// Verificar que la variable de entorno existe
-console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
-
-if (!import.meta.env.VITE_API_URL) {
-  console.error('❌ VITE_API_URL no está definida en las variables de entorno');
-}
-
+// 🔴 DIAGNÓSTICO: Usamos URL fija para probar
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000, // 10 segundos de timeout
+  baseURL: 'https://baguette-production-6565.up.railway.app/api/v1', 
+  timeout: 10000,
 });
+
+// Verificar qué URL se está usando
+console.log('🚨 URL FIJA configurada:', API.defaults.baseURL);
 
 // Interceptor para ver cada petición
 API.interceptors.request.use(request => {
   console.log('📤 Petición:', request.method.toUpperCase(), request.url);
-  console.log('   URL completa:', request.baseURL + request.url);
+  console.log('   URL completa:', API.defaults.baseURL + request.url);
   return request;
 });
 
-// Interceptor para respuestas
+// Interceptor para respuestas (igual)
 API.interceptors.response.use(
   response => {
     console.log('✅ Respuesta exitosa:', response.status);
@@ -30,10 +27,6 @@ API.interceptors.response.use(
     if (error.response) {
       console.error('   Status:', error.response.status);
       console.error('   Data:', error.response.data);
-    } else if (error.request) {
-      console.error('   No se recibió respuesta');
-    } else {
-      console.error('   Error:', error.message);
     }
     return Promise.reject(error);
   }
