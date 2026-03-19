@@ -35,16 +35,36 @@ function PedidoForm() {
   const cargarPedidos = async () => {
     try {
       setLoading(true);
-      // ✅ CORREGIDO: Ahora usa /pedidos
+      
+      // 🔍 LOGS DE DEPURACIÓN
+      console.log('🌐 BaseURL configurada:', API.defaults.baseURL);
+      console.log('📤 Intentando GET a:', API.defaults.baseURL + '/pedidos');
+      
       const res = await API.get("/pedidos");
+      
+      console.log('✅ Respuesta recibida:', res);
+      console.log('📦 Datos:', res.data);
 
       // Asegurarse de que siempre sea un array
       const data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
       setPedidos(data);
+      console.log('📊 Pedidos cargados:', data.length);
 
     } catch (error) {
-      console.error("Error al cargar pedidos:", error);
-      alert("❌ Error al cargar los pedidos");
+      console.error("❌ Error al cargar pedidos:");
+      console.error("   Mensaje:", error.message);
+      console.error("   URL completa:", error.config?.baseURL + error.config?.url);
+      console.error("   Status:", error.response?.status);
+      console.error("   Data:", error.response?.data);
+      
+      // Mensaje de error más descriptivo
+      if (error.response?.status === 500) {
+        alert("❌ Error en el servidor (500). El backend no puede procesar la solicitud.");
+      } else if (error.response?.status === 404) {
+        alert("❌ Ruta no encontrada (404). Verifica la URL de la API.");
+      } else {
+        alert("❌ Error al cargar los pedidos: " + (error.message || "Error desconocido"));
+      }
     } finally {
       setLoading(false);
     }
@@ -77,12 +97,14 @@ function PedidoForm() {
         abono: form.abono ? parseFloat(form.abono) : 0
       };
 
+      console.log('📤 Enviando payload:', payload);
+
       if (editingId) {
-        // ✅ CORREGIDO: Ahora usa /pedidos/:id
+        console.log('✏️ Actualizando pedido:', editingId);
         await API.put(`/pedidos/${editingId}`, payload);
         alert("✅ Pedido actualizado correctamente");
       } else {
-        // ✅ CORREGIDO: Ahora usa /pedidos
+        console.log('➕ Creando nuevo pedido');
         await API.post("/pedidos", payload);
         alert("✅ Pedido guardado correctamente");
       }
@@ -92,8 +114,10 @@ function PedidoForm() {
       setShowForm(false);
 
     } catch (error) {
-      console.error(error.response || error);
-      alert("❌ Error al guardar el pedido");
+      console.error("❌ Error al guardar:");
+      console.error("   Mensaje:", error.message);
+      console.error("   Respuesta:", error.response?.data);
+      alert("❌ Error al guardar el pedido: " + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -115,12 +139,12 @@ function PedidoForm() {
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás seguro de eliminar este pedido?")) {
       try {
-        // ✅ CORREGIDO: Ahora usa /pedidos/:id
+        console.log('🗑️ Eliminando pedido:', id);
         await API.delete(`/pedidos/${id}`);
         alert("✅ Pedido eliminado correctamente");
         cargarPedidos();
       } catch (error) {
-        console.error("Error al eliminar:", error);
+        console.error("❌ Error al eliminar:", error);
         alert("❌ Error al eliminar el pedido");
       }
     }
