@@ -1,19 +1,9 @@
 import { useState, useEffect } from "react";
 import API from "../servicios/api";
 import { 
-  FaBox, 
-  FaUser, 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaCalendarAlt, 
-  FaMoneyBillWave,
-  FaEdit,
-  FaTrash,
-  FaSearch,
-  FaPlus,
-  FaCheckCircle,
-  FaClock,
-  FaComment
+  FaBox, FaUser, FaPhone, FaMapMarkerAlt, FaCalendarAlt, 
+  FaMoneyBillWave, FaEdit, FaTrash, FaSearch, FaPlus, 
+  FaCheckCircle, FaClock, FaComment
 } from "react-icons/fa";
 import "../index.css";
 
@@ -46,7 +36,11 @@ function PedidoForm() {
     try {
       setLoading(true);
       const res = await API.get("/");
-      setPedidos(res.data);
+
+      // Asegurarse de que siempre sea un array
+      const data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
+      setPedidos(data);
+
     } catch (error) {
       console.error("Error al cargar pedidos:", error);
       alert("❌ Error al cargar los pedidos");
@@ -56,10 +50,7 @@ function PedidoForm() {
   };
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handlePagadoChange = (e) => {
@@ -67,19 +58,14 @@ function PedidoForm() {
     if (checked) {
       setForm({ ...form, pagado: [...form.pagado, value] });
     } else {
-      setForm({
-        ...form,
-        pagado: form.pagado.filter((m) => m !== value)
-      });
+      setForm({ ...form, pagado: form.pagado.filter((m) => m !== value) });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
-
       const payload = {
         ...form,
         fecha_solicitud: form.fecha_solicitud
@@ -91,16 +77,13 @@ function PedidoForm() {
       };
 
       if (editingId) {
-        // Actualizar pedido existente
         await API.put(`/${editingId}`, payload);
         alert("✅ Pedido actualizado correctamente");
       } else {
-        // Crear nuevo pedido
         await API.post("/", payload);
         alert("✅ Pedido guardado correctamente");
       }
 
-      // Limpiar formulario y recargar pedidos
       resetForm();
       cargarPedidos();
       setShowForm(false);
@@ -118,8 +101,9 @@ function PedidoForm() {
       ...pedido,
       fecha_solicitud: pedido.fecha_solicitud ? pedido.fecha_solicitud.split('T')[0] : "",
       fecha_envio: pedido.fecha_envio ? pedido.fecha_envio.split('T')[0] : "",
-      total: pedido.total.toString(),
-      abono: pedido.abono.toString()
+      total: pedido.total?.toString() || "0",
+      abono: pedido.abono?.toString() || "0",
+      pagado: Array.isArray(pedido.pagado) ? pedido.pagado : []
     });
     setEditingId(pedido._id);
     setShowForm(true);
@@ -153,30 +137,31 @@ function PedidoForm() {
     setEditingId(null);
   };
 
-  // Filtrar pedidos
-  const pedidosFiltrados = pedidos.filter(pedido => {
-    const matchesSearch = pedido.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         pedido.telefono.includes(searchTerm);
-    
-    if (filterStatus === "todos") return matchesSearch;
-    if (filterStatus === "pagado") return pedido.pagado.length > 0;
-    if (filterStatus === "pendiente") return pedido.pagado.length === 0;
-    
-    return matchesSearch;
-  });
+  // Filtrar pedidos con seguridad
+  const pedidosFiltrados = Array.isArray(pedidos)
+    ? pedidos.filter(pedido => {
+        const matchesSearch =
+          pedido.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pedido.telefono?.includes(searchTerm);
 
-  const calcularSaldo = (total, abono) => {
-    return total - abono;
-  };
+        if (filterStatus === "todos") return matchesSearch;
+        if (filterStatus === "pagado") return Array.isArray(pedido.pagado) && pedido.pagado.length > 0;
+        if (filterStatus === "pendiente") return Array.isArray(pedido.pagado) && pedido.pagado.length === 0;
+
+        return matchesSearch;
+      })
+    : [];
+
+  const calcularSaldo = (total, abono) => (total || 0) - (abono || 0);
 
   const getStatusColor = (pagado, total, abono) => {
-    if (pagado.length === 0) return "bg-yellow-100 text-yellow-800";
+    if (!Array.isArray(pagado) || pagado.length === 0) return "bg-yellow-100 text-yellow-800";
     if (calcularSaldo(total, abono) <= 0) return "bg-green-100 text-green-800";
     return "bg-blue-100 text-blue-800";
   };
 
   const getStatusText = (pagado, total, abono) => {
-    if (pagado.length === 0) return "Pendiente";
+    if (!Array.isArray(pagado) || pagado.length === 0) return "Pendiente";
     if (calcularSaldo(total, abono) <= 0) return "Pagado";
     return "Abonado";
   };
@@ -371,10 +356,7 @@ function PedidoForm() {
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    resetForm();
-                    setShowForm(false);
-                  }}
+                  onClick={() => { resetForm(); setShowForm(false); }}
                   className="px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl font-semibold transition"
                 >
                   Cancelar
@@ -457,46 +439,39 @@ function PedidoForm() {
                     </span>
                   </div>
 
-                  {pedido.pagado.length > 0 && (
+                  {Array.isArray(pedido.pagado) && pedido.pagado.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {pedido.pagado.map((metodo, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-blue-500/30 rounded-lg text-xs">
-                          {metodo}
-                        </span>
+                        <span key={idx} className="px-2 py-1 bg-blue-500/30 rounded-lg text-xs">{metodo}</span>
                       ))}
                     </div>
                   )}
 
                   {pedido.comentario && (
-                    <p className="text-sm italic border-t border-white/20 pt-2 mt-2">
-                      "{pedido.comentario}"
-                    </p>
+                    <p className="text-sm mt-2 italic text-white/60">💬 {pedido.comentario}</p>
                   )}
                 </div>
 
-                <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-white/20">
+                <div className="mt-4 flex justify-end space-x-3">
                   <button
                     onClick={() => handleEdit(pedido)}
-                    className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 rounded-lg transition"
+                    className="text-blue-500 hover:text-blue-400 transition"
                   >
                     <FaEdit />
                   </button>
                   <button
                     onClick={() => handleDelete(pedido._id)}
-                    className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg transition"
+                    className="text-red-500 hover:text-red-400 transition"
                   >
                     <FaTrash />
                   </button>
                 </div>
               </div>
             ))}
-          </div>
-        )}
 
-        {pedidosFiltrados.length === 0 && !loading && (
-          <div className="text-center py-12 bg-white/10 backdrop-blur-lg rounded-2xl">
-            <FaBox className="text-6xl text-white/30 mx-auto mb-4" />
-            <p className="text-white text-lg">No se encontraron pedidos</p>
+            {pedidosFiltrados.length === 0 && (
+              <p className="text-white col-span-full text-center mt-12">No hay pedidos que mostrar</p>
+            )}
           </div>
         )}
       </div>
