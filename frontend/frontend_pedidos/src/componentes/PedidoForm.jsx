@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios"; // 👈 IMPORTANTE: Agregar esta importación
 import API from "../servicios/api";
 import { 
   FaBox, FaUser, FaPhone, FaMapMarkerAlt, FaCalendarAlt, 
@@ -36,14 +37,14 @@ function PedidoForm() {
     try {
       setLoading(true);
       
-      // 🔍 LOGS DE DEPURACIÓN
-      console.log('🌐 BaseURL configurada:', API.defaults.baseURL);
-      console.log('📤 Intentando GET a:', API.defaults.baseURL + '/pedidos');
+      // 🔍 DIAGNÓSTICO: Ver qué hay en baseURL
+      console.log('🔍 VALOR REAL DE BASEURL:', API.defaults.baseURL);
       
-      const res = await API.get("/pedidos");
+      // 🔴 SOLUCIÓN DEFINITIVA: Usar URL completa directamente
+      const res = await axios.get('https://baguette-production-6565.up.railway.app/api/v1/pedidos');
       
-      console.log('✅ Respuesta recibida:', res);
-      console.log('📦 Datos:', res.data);
+      console.log('✅ Respuesta exitosa:', res.status);
+      console.log('📦 Pedidos recibidos:', res.data);
 
       // Asegurarse de que siempre sea un array
       const data = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.data) ? res.data.data : []);
@@ -53,7 +54,6 @@ function PedidoForm() {
     } catch (error) {
       console.error("❌ Error al cargar pedidos:");
       console.error("   Mensaje:", error.message);
-      console.error("   URL completa:", error.config?.baseURL + error.config?.url);
       console.error("   Status:", error.response?.status);
       console.error("   Data:", error.response?.data);
       
@@ -99,13 +99,14 @@ function PedidoForm() {
 
       console.log('📤 Enviando payload:', payload);
 
+      // 🔴 También usamos URL directa para crear/actualizar
       if (editingId) {
         console.log('✏️ Actualizando pedido:', editingId);
-        await API.put(`/pedidos/${editingId}`, payload);
+        await axios.put(`https://baguette-production-6565.up.railway.app/api/v1/pedidos/${editingId}`, payload);
         alert("✅ Pedido actualizado correctamente");
       } else {
         console.log('➕ Creando nuevo pedido');
-        await API.post("/pedidos", payload);
+        await axios.post('https://baguette-production-6565.up.railway.app/api/v1/pedidos', payload);
         alert("✅ Pedido guardado correctamente");
       }
 
@@ -140,7 +141,8 @@ function PedidoForm() {
     if (window.confirm("¿Estás seguro de eliminar este pedido?")) {
       try {
         console.log('🗑️ Eliminando pedido:', id);
-        await API.delete(`/pedidos/${id}`);
+        // 🔴 URL directa para eliminar
+        await axios.delete(`https://baguette-production-6565.up.railway.app/api/v1/pedidos/${id}`);
         alert("✅ Pedido eliminado correctamente");
         cargarPedidos();
       } catch (error) {
