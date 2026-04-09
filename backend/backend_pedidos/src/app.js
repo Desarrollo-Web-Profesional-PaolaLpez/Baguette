@@ -5,6 +5,7 @@ import mongoose from 'mongoose'
 
 import { pedidosRoutes } from './rutas/pedidos.js'  
 import { usuarioRoutes } from './rutas/usuarios.js'
+import { comentariosRoutes } from './rutas/comentarios.js';
 
 const app = express()
 
@@ -28,6 +29,7 @@ mongoose.connect(MONGODB_URI)
 // ✅ FORMA CORRECTA: Registrar las rutas
 pedidosRoutes(app)  // Esto ya configura /api/v1/pedidos internamente
 usuarioRoutes(app)  // Esto configurará /api/v1/usuarios
+comentariosRoutes(app);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
